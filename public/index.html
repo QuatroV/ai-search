@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Туристический помощник</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-header {
+            padding: 15px 20px;
+            background: #1976d2;
+            color: white;
+            font-weight: bold;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #1976d2;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .welcome-message {
+            color: #666;
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            background: white;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px;
+        }
+        
+        .chat-input:focus {
+            border-color: #1976d2;
+        }
+        
+        .send-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .send-button:hover {
+            background-color: #1565c0;
+        }
+        
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .trip-details {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .trip-details h3 {
+            margin-bottom: 10px;
+            color: #1976d2;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .trip-detail {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            min-width: 130px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #333;
+            padding: 12px 15px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Туристический помощник
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="bot-message message">
+                Привет! Я могу помочь найти вам тур. Опишите, куда бы вы хотели поехать, например: "Туры в Турцию в сентябре" или "Горящие туры в Египет на двоих с ребенком".
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="user-input" placeholder="Напишите ваш запрос..." autofocus>
+            <button class="send-button" id="send-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        
+        // Сессия и состояние
+        let sessionData = {
+            sessionId: generateSessionId(),
+            currentParams: null
+        };
+        
+        // Автофокус на поле ввода при загрузке страницы
+        window.onload = () => userInput.focus();
+        
+        // Генерация уникального ID сессии
+        function generateSessionId() {
+            return 'session_' + Math.random().toString(36).substring(2, 15);
+        }
+        
+        // Добавление сообщения пользователя в чат
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'user-message message';
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Добавление индикатора набора текста
+        function addTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'typing-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Удаление индикатора набора текста
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Добавление сообщения бота в чат
+        function addBotMessage(content) {
+            removeTypingIndicator();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'bot-message message';
+            
+            if (typeof content === 'string') {
+                messageDiv.textContent = content;
+            } else {
+                messageDiv.appendChild(content);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Форматирование данных о туре в читаемый вид
+        function formatTripDetails(tripData) {
+            const container = document.createElement('div');
+            
+            // Если есть готовое сообщение для пользователя (для модификаций, приветствий и т.д.)
+            if (tripData.message) {
+                const message = document.createElement('p');
+                message.textContent = tripData.message;
+                container.appendChild(message);
+                
+                // Если это ошибка или информационное сообщение без параметров, возвращаем только сообщение
+                if (tripData.action === 'MISSING_DESTINATION' || 
+                    tripData.action === 'GREETING' || 
+                    tripData.action === 'HELP' ||
+                    tripData.action === 'UNKNOWN' ||
+                    tripData.action === 'ERROR') {
+                    return container;
+                }
+            }
+            
+            // Для результатов поиска или модификации параметров
+            if (tripData.action === 'SEARCH_RESULTS' && !tripData.message) {
+                const introMessage = document.createElement('p');
+                introMessage.textContent = 'Я нашёл следующие параметры для вашего запроса:';
+                container.appendChild(introMessage);
+            }
+            
+            // Детали тура
+            const details = document.createElement('div');
+            details.className = 'trip-details';
+        
+
+            // Создание строк для каждого параметра
+            const createDetailRow = (label, value) => {
+                const row = document.createElement('div');
+                row.className = 'trip-detail';
+                
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'detail-label';
+                labelSpan.textContent = label + ':';
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'detail-value';
+                valueSpan.textContent = value;
+                
+                row.appendChild(labelSpan);
+                row.appendChild(valueSpan);
+                return row;
+            };
+            
+            // Страна назначения
+            if (tripData.to_country) {
+                const countryName = tripData.to_country;
+                details.appendChild(createDetailRow('Направление', countryName + (tripData.to_city ? `, ${tripData.to_city}` : '')));
+            }
+            
+            // Город отправления
+            if (tripData.from_city) {
+                details.appendChild(createDetailRow('Вылет из', tripData.from_city));
+            }
+            
+            // Дата начала тура
+            if (tripData.start_date) {
+                details.appendChild(createDetailRow('Дата вылета', tripData.start_date));
+            }
+            
+            // Длительность
+            if (tripData.nights) {
+                details.appendChild(createDetailRow('Ночей', tripData.nights));
+            }
+            
+            // Количество взрослых
+            if (tripData.adults) {
+                details.appendChild(createDetailRow('Взрослых', tripData.adults));
+            }
+            
+            // Количество детей
+            if (tripData.kids && tripData.kids > 0) {
+                details.appendChild(createDetailRow('Детей', tripData.kids));
+                
+                // Возраст детей
+                if (tripData.kids_ages && tripData.kids_ages.length > 0) {
+                    details.appendChild(createDetailRow('Возраст детей', tripData.kids_ages.join(', ')));
+                }
+            }
+            
+            // Добавляем детали, только если у нас есть параметры
+            if (details.children.length > 0) {
+                container.appendChild(details);
+            }
+            
+            // Добавляем подсказку, если это поиск или модификация
+            if (tripData.action === 'SEARCH_RESULTS' || tripData.action === 'PARAMS_MODIFIED') {
+                const additionalMsg = document.createElement('p');
+                additionalMsg.style.marginTop = '10px';
+                additionalMsg.textContent = 'Хотите изменить какие-то параметры? Например, "Измени дату на октябрь" или "Поменяй страну на Грецию".';
+                container.appendChild(additionalMsg);
+            }
+            
+            return container;
+        }
+        
+        // Обработка отправки сообщения
+        async function handleSendMessage() {
+            const query = userInput.value.trim();
+            
+            if (!query) {
+                return;
+            }
+            
+            // Добавляем сообщение пользователя в чат
+            addUserMessage(query);
+            
+            // Очищаем поле ввода
+            userInput.value = '';
+            
+            // Показываем индикатор "бот печатает"
+            addTypingIndicator();
+            
+            try {
+                // Отправляем запрос на сервер через новый API
+                const response = await fetch('/chat-api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: query,
+                        sessionId: sessionData.sessionId,
+                        currentParams: sessionData.currentParams
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем данные сессии
+                sessionData.sessionId = data.sessionId;
+                
+                // Сохраняем параметры для будущих запросов, если это результаты поиска или модификация
+                if (data.action === 'SEARCH_RESULTS' || 
+                    data.action === 'PARAMS_MODIFIED') {
+                    // Копируем параметры без служебных полей
+                    sessionData.currentParams = { ...data };
+                }
+                
+                // Добавляем форматированный ответ бота
+                const formattedContent = formatTripDetails(data);
+                addBotMessage(formattedContent);
+                
+            } catch (error) {
+                // Если произошла ошибка, пробуем использовать старый API для обратной совместимости
+                try {
+                    const response = await fetch('/parse-trip', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: query })
+                    });
+                    
+                    if (!response.ok) {
+                        throw error; // Используем оригинальную ошибку
+                    }
+                    
+                    const data = await response.json();
+                    const formattedContent = formatTripDetails(data);
+                    addBotMessage(formattedContent);
+                    
+                } catch (fallbackError) {
+                    addBotMessage(`Извините, произошла ошибка: ${error.message}`);
+                }
+            }
+        }
+        
+        // Обработчики событий
+        sendButton.addEventListener('click', handleSendMessage);
+        
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 

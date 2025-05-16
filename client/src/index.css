@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .message {
+    @apply max-w-[80%] p-3 rounded-2xl relative animate-[fadeIn_0.3s_ease] break-words;
+  }
+
+  .user-message {
+    @apply self-end bg-primary text-white rounded-br-sm;
+  }
+
+  .bot-message {
+    @apply self-start bg-gray-100 text-gray-800 rounded-bl-sm;
+  }
+
+  .typing-indicator span {
+    @apply h-2 w-2 mx-0.5 bg-gray-500 rounded-full inline-block;
+  }
+
+  .typing-indicator span:nth-child(1) {
+    @apply animate-typing-dot;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    @apply animate-typing-dot delay-200;
+  }
+
+  .typing-indicator span:nth-child(3) {
+    @apply animate-typing-dot delay-[400ms];
+  }
+}
